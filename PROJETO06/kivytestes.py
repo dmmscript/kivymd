@@ -1,48 +1,73 @@
-from kivy.lang import Builder
-from kivy.metrics import dp
-
 from kivymd.app import MDApp
-from kivymd.uix.menu import MDDropdownMenu
-from kivymd.uix.snackbar import Snackbar
-
-KV = '''
-MDBoxLayout:
-    orientation: "vertical"
-
-    MDTopAppBar:
-        title: "Mundo dos Cílios"
-        left_action_items: [["menu", lambda x: app.callback(x)]]
-        right_action_items: [["dots-vertical", lambda x: app.callback(x)]]
-
-    MDLabel:
-        text: "Content"
-        halign: "center"
-'''
+from kivymd.uix.label import MDLabel
+from kivymd.uix.list import MDList, OneLineListItem
+from kivymd.uix.navigationdrawer import MDNavigationLayout, MDNavigationDrawer
+from kivymd.uix.screen import MDScreen
+from kivymd.uix.screenmanager import MDScreenManager
+from kivymd.uix.scrollview import MDScrollView
+from kivymd.uix.toolbar import MDTopAppBar
 
 
-class Test(MDApp):
+class Example(MDApp):
     def build(self):
-        menu_items = [
-            {
-                "viewclass": "OneLineListItem",
-                "text": f"Item {i}",
-                "height": dp(56),
-                "on_release": lambda x=f"Item {i}": self.menu_callback(x),
-             } for i in range(5)
-        ]
-        self.menu = MDDropdownMenu(
-            items=menu_items,
-            width_mult=4,
+        self.theme_cls.primary_palette = "Orange"
+        self.theme_cls.theme_style = "Dark"
+        return (
+            MDScreen(
+                MDTopAppBar(
+                    pos_hint={"top": 1},
+                    elevation=4,
+                    title="MDNavigationDrawer",
+                    left_action_items=[["menu", lambda x: self.nav_drawer_open()]],
+                ),
+                MDNavigationLayout(
+                    MDScreenManager(
+                        MDScreen(
+                            MDLabel(
+                                text="Screen 1",
+                                halign="center",
+                            ),
+                            name="scr 1",
+                        ),
+                        MDScreen(
+                            MDLabel(
+                                text="Screen 2",
+                                halign="center",
+                            ),
+                            name="scr 2",
+                        ),
+                        id="screen_manager",
+                    ),
+                    MDNavigationDrawer(
+                        MDScrollView(
+                            MDList(
+                                OneLineListItem(
+                                    text="Screen 1",
+                                    on_press=self.switch_screen,
+                                ),
+                                OneLineListItem(
+                                    text="Screen 2",
+                                    on_press=self.switch_screen,
+                                ),
+                            ),
+                        ),
+                        id="nav_drawer",
+                        radius=(0, 16, 16, 0),
+                    ),
+                    id="navigation_layout",
+                )
+            )
         )
-        return Builder.load_string(KV)
 
-    def callback(self, button):
-        self.menu.caller = button
-        self.menu.open()
+    def switch_screen(self, instance_list_item: OneLineListItem):
+        self.root.ids.navigation_layout.ids.screen_manager.current = {
+            "Screen 1": "scr 1", "Screen 2": "scr 2"
+        }[instance_list_item.text]
+        self.root.children[0].ids.nav_drawer.set_state("close")
 
-    def menu_callback(self, text_item):
-        self.menu.dismiss()
-        Snackbar(text=text_item).open()
+    def nav_drawer_open(self):
+        nav_drawer = self.root.children[0].ids.nav_drawer
+        nav_drawer.set_state("open")
 
 
-Test().run()
+Example().run()

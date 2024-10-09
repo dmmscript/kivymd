@@ -12,6 +12,10 @@ from kivy.uix.stencilview import StencilView
 from kivy.uix.widget import Widget
 from kivy.graphics import Ellipse, Color
 from kivy.uix.screenmanager import Screen, ScreenManager
+from kivymd.uix.list import MDList, OneLineListItem
+from kivymd.uix.navigationdrawer import MDNavigationLayout, MDNavigationDrawer
+from kivymd.uix.scrollview import MDScrollView
+from kivymd.uix.toolbar import MDTopAppBar
 
 class ManipulaJanela:
     def __init__(self, altura, largura):
@@ -20,19 +24,25 @@ class ManipulaJanela:
 
     def ajustar_tamanho_janela(self):
         Window.size = (self.altura, self.largura)
-        
+     
+class MinhaAgenda(Screen):
+    pass
+
+class RedesSociais(Screen):
+    pass
+
 class MundoDosCiliosApp(MDApp):
     def build(self):
         manipulador = ManipulaJanela(600, 800)
         manipulador.ajustar_tamanho_janela()
 
-        self.theme_cls.theme_style = "Dark"
+        self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Pink"
         self.theme_cls.primary_hue = "200"
 
         sm = ScreenManager()
         tela_principal = Screen(name='principal')
-        layout = FloatLayout()
+        layout = MDBoxLayout()
 
         background = Image(source='mundodoscilios.png', allow_stretch=True, keep_ratio=False)
         layout.add_widget(background)
@@ -49,28 +59,23 @@ class MundoDosCiliosApp(MDApp):
             ("Volume Brasileiro","volumebrasileiro.png"),
             ("Volume Russo","volumerusso.png"),
             ("Volume Clássico","volumeclassico.png"),
-            ("S.O.S Capilar","soscapilar.png"),
+            ("SOS Capilar","soscapilar.png"),
             ("Cursos","cursos.png")]
 
         for servico, imagem in servicos:
             grid = MDGridLayout(cols=2, adaptive_height=True)
             img = FitImage(source=imagem, size_hint=(None, None), size=(50,50))
             botao1 = MDRaisedButton(text=servico, on_release=self.mostrar_servico)
-
-            # botao2 = MDIconButton(icon="arrow-left", on_release=self.botao_voltar)
-            # botao2.size_hint = (None, None)
-            # botao2.size = (48, 48)
-
             grid.add_widget(img)
             grid.add_widget(botao1)
-            # grid.add_widget(botao2)
             box_layout.add_widget(grid)
-
+            
         layout.add_widget(box_layout)
         tela_principal.add_widget(layout)
         sm.add_widget(tela_principal)
 
-        # Outras telas
+        sm.add_widget(MinhaAgenda(name="Minha Agenda"))
+        sm.add_widget(RedesSociais(name="Redes Sociais"))
         sm.add_widget(SobreNos(name="Sobre Nós"))
         sm.add_widget(NossaEquipe(name="Nossa Equipe"))
         sm.add_widget(EfeitoFox(name="Efeito Fox"))
@@ -81,30 +86,87 @@ class MundoDosCiliosApp(MDApp):
         sm.add_widget(VolumeBrasileiro(name="Volume Brasileiro"))
         sm.add_widget(VolumeRusso(name="Volume Russo"))
         sm.add_widget(VolumeClassico(name="Volume Clássico"))
-        sm.add_widget(SosCapilar(name="S.O.S Capilar"))
+        sm.add_widget(SosCapilar(name="SOS Capilar"))
         sm.add_widget(Cursos(name="Cursos"))
-
-        return sm
-
-     #FAZER AS REDES SOCIAIS EM NAVIGATIONDRAWER
 
     def mostrar_servico(self, instance):
         self.root.current = instance.text
+       
+        navigation_layout = MDNavigationLayout(
+            ScreenManager(
+                MDTopAppBar(
+                    pos_hint={"top": 1},
+                    elevation=4,
+                    title="Mundo dos Cílios",
+                    right_action_items=[["menu", lambda x: self.nav_drawer_open()]],
+                ),
+                   ScreenManager(
+                        Screen(
+                            MDLabel(
+                                text="Minha Agenda",
+                                halign="center",
+                            ),
+                            name="Minha Agenda",
+                        ),
+                        Screen(
+                            MDLabel(
+                                text="Redes Sociais",
+                                halign="center",
+                            ),
+                            name="Redes Sociais",
+                        ),
+                        id="screen_manager",
+                    ),
+                    MDNavigationDrawer(
+                        MDScrollView(
+                            MDList(
+                                OneLineListItem(
+                                    text="Minha Agenda",
+                                    on_press=self.switch_screen
+                                ),
+                                OneLineListItem(
+                                    text="Redes Sociais",
+                                    on_press=self.switch_screen
+                                ),
+                            ),
+                        ),
+                        id="nav_drawer",
+                        radius=(0, 16, 16, 0),
+                    ),
+                    id="navigation_layout",
+                )
+            )
+
+    def switch_screen(self, instance_list_item: OneLineListItem):
+        self.root.ids.navigation_layout.ids.screen_manager.current = {
+            "Minha Agenda": "Minha Agenda",
+            "Redes Sociais": "Redes Sociais"
+        }[instance_list_item.text]
+        self.root.children[0].ids.nav_drawer.set_state("close")
+
+    def nav_drawer_open(self):
+        nav_drawer = self.root.children[0].ids.nav_drawer
+        nav_drawer.set_state("open")
 
 class BotaoVoltar(MDIconButton):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         self.icon = "arrow-left"
+        self.theme_icon_color = "Custom"
+        self.icon_color = "#FF6EC7"
         self.size_hint = [.1, .1]
-
+        self.pos_hint = {"center_x": 0.0, "center_y": 0.9}
+        
     def on_press(self):
         app = MDApp.get_running_app()
-        app.root.current = 'principal'
+        app.root.current = "principal"
 
 class SobreNos(Screen):
-    def __init__(self, **kwards):
-        super().__init__(**kwards)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
+        # background = Image(source='sobrenos.png', allow_stretch=True, keep_ratio=False)
+        # layout.add_widget(background)
         label = MDLabel(
             text="Se beleza fosse crime, a galera do Mundo dos Cílios "
                 "estaria na prisão! A gente capricha na extensão de "
@@ -125,16 +187,18 @@ class SobreNos(Screen):
                 "si também é sobre curtir bons momentos. "
                 "A gente está por aqui pra te atender do jeito que "
                 "você merece: com carinho e muita atenção!",
-            halign="center"
+            halign="center",
+            # pos_hint={"center_x": 0.5, "center_y:": 0.5},
+            # theme_text_color="Custom",
+            # text_color=(1, 1, 1, 1)
         )
-
         layout.add_widget(label)
         layout.add_widget(BotaoVoltar())
         self.add_widget(layout)
 
 class NossaEquipe(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="No Mundo dos Cílios, nossa equipe é o coração do estúdio, com a Jessy, nossa "
@@ -157,8 +221,8 @@ class NossaEquipe(Screen):
         self.add_widget(layout)
 
 class EfeitoFox(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="O efeito Fox é a tendência do momento no mundo lash, perfeito "
@@ -176,8 +240,8 @@ class EfeitoFox(Screen):
         self.add_widget(layout)
 
 class EfeitoHarmony(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="O Efeito Harmony é a nova sensação para quem quer dar um toque especial ao "
@@ -196,8 +260,8 @@ class EfeitoHarmony(Screen):
         self.add_widget(layout)
 
 class TecnicaHibrido(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="A técnica Híbrida é perfeita para quem quer "
@@ -222,8 +286,8 @@ class TecnicaHibrido(Screen):
         self.add_widget(layout)
 
 class VolumePower(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="O Volume Power é pra quem quer causar mesmo! Se você é do time "
@@ -243,8 +307,8 @@ class VolumePower(Screen):
         self.add_widget(layout)
 
 class VolumeLight(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="O Volume Light é perfeito para quem quer o melhor dos dois "
@@ -265,8 +329,8 @@ class VolumeLight(Screen):
         self.add_widget(layout)
 
 class VolumeBrasileiro(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="O Volume Brasileiro é a técnica queridinha do momento e tá bombando por aqui! O "
@@ -286,8 +350,8 @@ class VolumeBrasileiro(Screen):
         self.add_widget(layout)
 
 class VolumeRusso(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="O Volume Russo é o verdadeiro luxo dos cílios! "
@@ -311,8 +375,8 @@ class VolumeRusso(Screen):
         self.add_widget(layout)
         
 class VolumeClassico(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="O Volume Clássico é a escolha perfeita pra quem ama aquele "
@@ -333,8 +397,8 @@ class VolumeClassico(Screen):
         self.add_widget(layout)
 
 class SosCapilar(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="Conheça Kesya Heloise, nossa cabeleireira especializada em "
@@ -351,8 +415,40 @@ class SosCapilar(Screen):
         self.add_widget(layout)
 
 class Cursos(Screen):
-    def __init__(self,**kwards):
-        super().__init__(**kwards)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        layout = MDBoxLayout(orientation='vertical', padding=20)
+        label = MDLabel(
+            text="No Mundo dos Cílios, além de todos os cuidados que "
+                "realçam sua beleza, você também encontra a "
+                "oportunidade de transformar sua carreira "
+                "com nossos cursos de extensão de cílios e "
+                "sobrancelhas. Quer saber mais? É só chamar!",
+            halign="center"
+        )
+        layout.add_widget(label)
+        layout.add_widget(BotaoVoltar())
+        self.add_widget(layout)
+
+class MinhaAgenda(Screen):
+    def __init__(self,**kwargs):
+        super(MinhaAgenda, self).__init__(**kwargs)
+        layout = MDBoxLayout(orientation='vertical', padding=20)
+        label = MDLabel(
+            text="No Mundo dos Cílios, além de todos os cuidados que "
+                "realçam sua beleza, você também encontra a "
+                "oportunidade de transformar sua carreira "
+                "com nossos cursos de extensão de cílios e "
+                "sobrancelhas. Quer saber mais? É só chamar!",
+            halign="center"
+        )
+        layout.add_widget(label)
+        layout.add_widget(BotaoVoltar())
+        self.add_widget(layout)
+
+class RedesSociais(Screen):
+    def __init__(self,**kwargs):
+        super(RedesSociais, self).__init__(**kwargs)
         layout = MDBoxLayout(orientation='vertical', padding=20)
         label = MDLabel(
             text="No Mundo dos Cílios, além de todos os cuidados que "
