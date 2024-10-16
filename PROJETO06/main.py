@@ -12,10 +12,6 @@ from kivy.uix.stencilview import StencilView
 from kivy.uix.widget import Widget
 from kivy.graphics import Ellipse, Color
 from kivy.uix.screenmanager import Screen, ScreenManager
-from kivymd.uix.list import MDList, OneLineListItem
-from kivymd.uix.navigationdrawer import MDNavigationLayout, MDNavigationDrawer
-from kivymd.uix.scrollview import MDScrollView
-from kivymd.uix.toolbar import MDTopAppBar
 
 class ManipulaJanela:
     def __init__(self, altura, largura):
@@ -25,12 +21,6 @@ class ManipulaJanela:
     def ajustar_tamanho_janela(self):
         Window.size = (self.altura, self.largura)
      
-class MinhaAgenda(Screen):
-    pass
-
-class RedesSociais(Screen):
-    pass
-
 class MundoDosCiliosApp(MDApp):
     def build(self):
         manipulador = ManipulaJanela(600, 800)
@@ -42,12 +32,12 @@ class MundoDosCiliosApp(MDApp):
 
         sm = ScreenManager()
         tela_principal = Screen(name='principal')
-        layout = MDBoxLayout()
+        layout = FloatLayout() # torna o background sob os widgets
 
         background = Image(source='mundodoscilios.png', allow_stretch=True, keep_ratio=False)
         layout.add_widget(background)
 
-        box_layout = MDBoxLayout(orientation='vertical', padding=10, spacing=10)
+        box_layout = MDBoxLayout(orientation='vertical', padding=10, spacing=5)
         servicos = [
             ("Sobre Nós", "sobrenos.png"),
             ("Nossa Equipe", "nossaequipe.png"),
@@ -65,17 +55,15 @@ class MundoDosCiliosApp(MDApp):
         for servico, imagem in servicos:
             grid = MDGridLayout(cols=2, adaptive_height=True)
             img = FitImage(source=imagem, size_hint=(None, None), size=(50,50))
-            botao1 = MDRaisedButton(text=servico, on_release=self.mostrar_servico)
+            botao = MDRaisedButton(text=servico, on_release=self.mostrar_servico)
             grid.add_widget(img)
-            grid.add_widget(botao1)
+            grid.add_widget(botao)
             box_layout.add_widget(grid)
             
         layout.add_widget(box_layout)
         tela_principal.add_widget(layout)
         sm.add_widget(tela_principal)
 
-        sm.add_widget(MinhaAgenda(name="Minha Agenda"))
-        sm.add_widget(RedesSociais(name="Redes Sociais"))
         sm.add_widget(SobreNos(name="Sobre Nós"))
         sm.add_widget(NossaEquipe(name="Nossa Equipe"))
         sm.add_widget(EfeitoFox(name="Efeito Fox"))
@@ -89,65 +77,11 @@ class MundoDosCiliosApp(MDApp):
         sm.add_widget(SosCapilar(name="SOS Capilar"))
         sm.add_widget(Cursos(name="Cursos"))
 
+        return sm
+    
     def mostrar_servico(self, instance):
         self.root.current = instance.text
-       
-        navigation_layout = MDNavigationLayout(
-            ScreenManager(
-                MDTopAppBar(
-                    pos_hint={"top": 1},
-                    elevation=4,
-                    title="Mundo dos Cílios",
-                    right_action_items=[["menu", lambda x: self.nav_drawer_open()]],
-                ),
-                   ScreenManager(
-                        Screen(
-                            MDLabel(
-                                text="Minha Agenda",
-                                halign="center",
-                            ),
-                            name="Minha Agenda",
-                        ),
-                        Screen(
-                            MDLabel(
-                                text="Redes Sociais",
-                                halign="center",
-                            ),
-                            name="Redes Sociais",
-                        ),
-                        id="screen_manager",
-                    ),
-                    MDNavigationDrawer(
-                        MDScrollView(
-                            MDList(
-                                OneLineListItem(
-                                    text="Minha Agenda",
-                                    on_press=self.switch_screen
-                                ),
-                                OneLineListItem(
-                                    text="Redes Sociais",
-                                    on_press=self.switch_screen
-                                ),
-                            ),
-                        ),
-                        id="nav_drawer",
-                        radius=(0, 16, 16, 0),
-                    ),
-                    id="navigation_layout",
-                )
-            )
-
-    def switch_screen(self, instance_list_item: OneLineListItem):
-        self.root.ids.navigation_layout.ids.screen_manager.current = {
-            "Minha Agenda": "Minha Agenda",
-            "Redes Sociais": "Redes Sociais"
-        }[instance_list_item.text]
-        self.root.children[0].ids.nav_drawer.set_state("close")
-
-    def nav_drawer_open(self):
-        nav_drawer = self.root.children[0].ids.nav_drawer
-        nav_drawer.set_state("open")
-
+      
 class BotaoVoltar(MDIconButton):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
@@ -160,7 +94,7 @@ class BotaoVoltar(MDIconButton):
     def on_press(self):
         app = MDApp.get_running_app()
         app.root.current = "principal"
-
+        
 class SobreNos(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
