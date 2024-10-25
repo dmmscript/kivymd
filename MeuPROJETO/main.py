@@ -12,6 +12,8 @@ from kivy.uix.stencilview import StencilView
 from kivy.uix.widget import Widget
 from kivy.graphics import Ellipse, Color
 from kivy.uix.screenmanager import Screen, ScreenManager
+from kivymd.uix.dialog import MDDialog
+import requests
 
 class ManipulaJanela:
     def __init__(self, altura, largura):
@@ -39,6 +41,7 @@ class MundoDosCiliosApp(MDApp):
 
         box_layout = MDBoxLayout(orientation='vertical', padding=10, spacing=5)
         servicos = [
+            ("Minha Conta", "minhaconta.png"),
             ("Sobre Nós", "sobrenos.png"),
             ("Nossa Equipe", "nossaequipe.png"),
             ("Efeito Fox", "efeitofox.png"),
@@ -64,6 +67,7 @@ class MundoDosCiliosApp(MDApp):
         tela_principal.add_widget(layout)
         sm.add_widget(tela_principal)
 
+        sm.add_widget(MinhaConta(name="Minha Conta"))
         sm.add_widget(SobreNos(name="Sobre Nós"))
         sm.add_widget(NossaEquipe(name="Nossa Equipe"))
         sm.add_widget(EfeitoFox(name="Efeito Fox"))
@@ -364,36 +368,79 @@ class Cursos(Screen):
         layout.add_widget(BotaoVoltar())
         self.add_widget(layout)
 
-class MinhaAgenda(Screen):
-    def __init__(self,**kwargs):
-        super(MinhaAgenda, self).__init__(**kwargs)
-        layout = MDBoxLayout(orientation='vertical', padding=20)
-        label = MDLabel(
-            text="No Mundo dos Cílios, além de todos os cuidados que "
-                "realçam sua beleza, você também encontra a "
-                "oportunidade de transformar sua carreira "
-                "com nossos cursos de extensão de cílios e "
-                "sobrancelhas. Quer saber mais? É só chamar!",
-            halign="center"
+class MinhaConta(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.layout = MDBoxLayout(orientation='vertical', padding=20)
+        
+        self.nome_input = MDTextField(hint_text="Nome")
+        self.layout.add_widget(self.nome_input)
+        
+        self.email_input = MDTextField(hint_text="E-mail")
+        self.layout.add_widget(self.email_input)
+        
+        self.whatsapp_input = MDTextField(hint_text="Whatsapp")
+        self.layout.add_widget(self.whatsapp_input)
+        
+        self.entrada_dados = MDTextField(
+            hint_text="Digite o CEP",
+            helper_text="Apenas números (ex: 01001000)",
+            helper_text_mode="on_focus",
+            max_text_length=8,
+            id="entrada_dados"
         )
-        layout.add_widget(label)
-        layout.add_widget(BotaoVoltar())
-        self.add_widget(layout)
+        self.layout.add_widget(self.entrada_dados)
+        
+        self.botao_pesquisar = MDRaisedButton(text="Pesquisar CEP", on_release=self.pesquisar_cep)
+        self.layout.add_widget(self.botao_pesquisar)
+        
+        self.saida_dados = MDLabel(
+            halign="left",
+            id="saida_dados"
+        )
+        self.layout.add_widget(self.saida_dados)
+        
+        self.numerodacasa_input = MDTextField(hint_text="Número da casa")
+        self.layout.add_widget(self.numerodacasa_input)
+        
+        self.botao_salvar = MDRaisedButton(text="Salvar", on_release=self.salvar_perfil)
+        self.layout.add_widget(self.botao_salvar)
+        
+        # Supondo que você tenha uma classe BotaoVoltar para adicionar ao layout
+        self.layout.add_widget(BotaoVoltar())
+        
+        self.add_widget(self.layout)
 
-class RedesSociais(Screen):
-    def __init__(self,**kwargs):
-        super(RedesSociais, self).__init__(**kwargs)
-        layout = MDBoxLayout(orientation='vertical', padding=20)
-        label = MDLabel(
-            text="No Mundo dos Cílios, além de todos os cuidados que "
-                "realçam sua beleza, você também encontra a "
-                "oportunidade de transformar sua carreira "
-                "com nossos cursos de extensão de cílios e "
-                "sobrancelhas. Quer saber mais? É só chamar!",
-            halign="center"
-        )
-        layout.add_widget(label)
-        layout.add_widget(BotaoVoltar())
-        self.add_widget(layout)
+    def pesquisar_cep(self, instance):
+        entrada_dados = self.entrada_dados.text
+        saida_dados = self.saida_dados
+        if entrada_dados.isdigit() and len(entrada_dados) == 8:
+            url = f'http://viacep.com.br/ws/{entrada_dados}/json/'
+            response = requests.get(url)
+            data = response.json()
+            if 'erro' in data:
+                saida_dados.text = 'CEP não encontrado.'
+            else:
+                endereco = (
+                    f"CEP: {data['cep']}\nLogradouro: {data['logradouro']}\n"
+                    f"Bairro: {data['bairro']}\nCidade: {data['localidade']}\n"
+                    f"Estado: {data['uf']}"
+                )
+                saida_dados.text = endereco
+        else:
+            saida_dados.text = 'CEP inválido.'
+
+    def salvar_perfil(self, instance):
+        nome = self.nome_input.text
+        email = self.email_input.text
+        whatsapp = self.whatsapp_input.text
+        if not nome or not whatsapp:
+            self.show_dialog("Erro", "Por favor, preencha seu nome e whatsapp!")
+        else:
+            print(f"Perfil salvo: Nome: {nome}, E-mail: {email}, Whatsapp: {whatsapp}")
+
+    def show_dialog(self, title, text):
+        dialog = MDDialog(title=title, text=text, size_hint=(0.8, 1))
+        dialog.open()
 
 MundoDosCiliosApp().run()
